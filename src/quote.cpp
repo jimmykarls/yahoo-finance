@@ -8,7 +8,6 @@
 #include <curl/curl.h>
 #include <ctime>
 #include <stdexcept>
-#include <boost/algorithm/string.hpp>
 
 Quote::Quote(std::string symbol) {
     this->symbol = symbol;
@@ -40,7 +39,7 @@ Spot Quote::getSpot(std::time_t date) {
             return *it;
         }
     }
-    std::string error = "ERROR getSpot(date) - There is not spot at " + date;
+    std::string error = "ERROR getSpot(date) - There is not spot at " + std::to_string(date);
     throw std::invalid_argument(error);
 }
 
@@ -107,7 +106,16 @@ void Quote::getHistoricalSpots(std::time_t period1,
 
     while (std::getline(csvStream, line)) {
         std::vector<std::string> data;
-        boost::split(data, line, boost::is_any_of(","));
+
+        const std::string delimiter = ",";
+        size_t pos = 0;
+        std::string token;
+        while ((pos = line.find(delimiter)) != std::string::npos) {
+            token = line.substr(0, pos);
+            data.push_back(token);
+            line.erase(0, pos + delimiter.length());
+        }
+        data.push_back(line);
 
         if (data[0] != "null" && data[1] != "null") {
             Spot spot = Spot(
